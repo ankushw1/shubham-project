@@ -28,7 +28,14 @@ export async function POST(request) {
 
     return NextResponse.json(
       { success: true, id: result.insertedId },
-      { status: 201 }
+      { 
+        status: 201,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
     );
   } catch (error) {
     console.error('❌ Error submitting form:', error);

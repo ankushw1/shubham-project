@@ -51,8 +51,10 @@ export default function Home() {
     try {
       const response = await fetch('/api/submit-form', {
         method: 'POST',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
         },
         body: JSON.stringify(formData),
       });
@@ -174,10 +176,8 @@ export default function Home() {
               className="form-input"
             >
               <option value="">Select Year</option>
-              <option value="FE">FE</option>
-              <option value="SE">SE</option>
-              <option value="TE">TE</option>
-              <option value="BE">BE</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
             </select>
           </div>
 

@@ -13,7 +13,12 @@ export default function AdminPanel() {
 
   const fetchRegistrations = async () => {
     try {
-      const response = await fetch('/api/get-registrations');
+      const response = await fetch('/api/get-registrations', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       const data = await response.json();
       if (response.ok) {
         setRegistrations(data);

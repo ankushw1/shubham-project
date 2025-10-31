@@ -27,7 +27,14 @@ export async function GET() {
       _id: reg._id.toString(),
     }));
 
-    return NextResponse.json(formattedRegistrations, { status: 200 });
+    return NextResponse.json(formattedRegistrations, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('❌ Error fetching registrations:', error);
     console.error('Error message:', error.message);
