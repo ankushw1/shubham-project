@@ -6,6 +6,7 @@ export default function AdminPanel() {
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -48,6 +49,32 @@ export default function AdminPanel() {
       isMounted = false;
     };
   }, []);
+
+  const handleDelete = async (id, name) => {
+    if (!confirm(`Are you sure you want to delete registration for "${name}"?`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      const response = await fetch(`/api/delete-registration?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Remove deleted registration from local state
+        setRegistrations(registrations.filter(reg => reg._id !== id));
+      } else {
+        setError(data.error || 'Failed to delete registration');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -110,6 +137,7 @@ export default function AdminPanel() {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Campus Location</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Remarks</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Created At</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -140,6 +168,15 @@ export default function AdminPanel() {
                       <td className="px-4 py-3 text-sm text-gray-700 max-w-xs break-words">{reg.remarksByCommittee || '-'}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                         {reg.createdAt ? new Date(reg.createdAt).toLocaleString() : '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => handleDelete(reg._id, reg.name)}
+                          disabled={deletingId === reg._id}
+                          className="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {deletingId === reg._id ? 'Deleting...' : 'Delete'}
+                        </button>
                       </td>
                     </tr>
                   ))}
