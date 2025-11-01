@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '../../../lib/mongodb';
 
-export async function GET() {
+// Force dynamic rendering - no static caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export async function GET(request) {
   try {
     // Try to connect with timeout
     const client = await Promise.race([
@@ -14,12 +18,13 @@ export async function GET() {
     const db = client.db('event-registration');
     const collection = db.collection('registrations');
 
+    // Force a fresh query by adding timestamp
     const registrations = await collection
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
 
-    console.log(`✅ Fetched ${registrations.length} registrations`);
+    console.log(`✅ Fetched ${registrations.length} registrations at ${new Date().toISOString()}`);
 
     // Convert MongoDB ObjectId to string for JSON serialization
     const formattedRegistrations = registrations.map(reg => ({
@@ -27,13 +32,18 @@ export async function GET() {
       _id: reg._id.toString(),
     }));
 
+    // Send response with no caching
+    const headers = {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'CDN-Cache-Control': 'no-store',
+      'Vercel-CDN-Cache-Control': 'no-store',
+    };
+
     return NextResponse.json(formattedRegistrations, { 
       status: 200,
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      },
+      headers,
     });
   } catch (error) {
     console.error('❌ Error fetching registrations:', error);

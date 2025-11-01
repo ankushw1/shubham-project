@@ -8,29 +8,46 @@ export default function AdminPanel() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchRegistrations();
-  }, []);
-
-  const fetchRegistrations = async () => {
-    try {
-      const response = await fetch('/api/get-registrations', {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setRegistrations(data);
-      } else {
-        setError(data.error || 'Failed to fetch registrations');
+    let isMounted = true;
+    
+    const fetchRegistrations = async () => {
+      try {
+        setLoading(true);
+        const timestamp = new Date().getTime(); // Force fresh request
+        const response = await fetch(`/api/get-registrations?t=${timestamp}`, {
+          method: 'GET',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        });
+        const data = await response.json();
+        if (isMounted) {
+          if (response.ok) {
+            setRegistrations(data);
+          } else {
+            setError(data.error || 'Failed to fetch registrations');
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError('Network error. Please try again.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchRegistrations();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (loading) {
     return (
